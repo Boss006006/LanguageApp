@@ -14,7 +14,7 @@ database = 'LanguageApp'
 username = os.getenv('DB_LOGIN')
 password = os.getenv('DB_PASSWORD')
 
-connection_string = f"DRIVER={{SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}"
+connection_string = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}"
 #endregion
  
 #region ---- Page Configuration ----
