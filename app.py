@@ -28,6 +28,9 @@ st.set_page_config(
 DB_LOGIN = st.secrets["DB_LOGIN"]
 DB_PASSWORD = st.secrets["DB_PASSWORD"]
 
+st.write(DB_LOGIN)
+st.write(DB_PASSWORD)
+
 db_config = {
     'host': 'sql7.freesqldatabase.com',
     'database': DB_LOGIN,
