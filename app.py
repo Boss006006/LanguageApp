@@ -15,6 +15,16 @@ from mysql.connector import Error
 #DB_LOGIN = os.getenv("DB_LOGIN")
 #DB_PASSWORD = os.getenv("DB_PASSWORD")
 
+# Debugging line (remove after checking)
+st.write("Secrets available:", st.secrets)
+
+# Use `.get()` to prevent errors if secrets are missing
+DB_LOGIN = st.secrets.get("DB_LOGIN", None)
+DB_PASSWORD = st.secrets.get("DB_PASSWORD", None)
+
+if not DB_LOGIN or not DB_PASSWORD:
+    st.error("Database credentials are missing! Set them in Streamlit Cloud.")
+
 db_config = {
     'host': 'sql7.freesqldatabase.com',
     'database': 'sql7760550',
