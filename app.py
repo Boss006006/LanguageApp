@@ -22,6 +22,9 @@ st.write("Secrets available:", st.secrets)
 DB_LOGIN = st.secrets.get("DB_LOGIN", None)
 DB_PASSWORD = st.secrets.get("DB_PASSWORD", None)
 
+st.write(DB_LOGIN)
+st.write(DB_PASSWORD)
+
 if not DB_LOGIN or not DB_PASSWORD:
     st.error("Database credentials are missing! Set them in Streamlit Cloud.")
 
