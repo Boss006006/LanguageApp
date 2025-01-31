@@ -25,17 +25,22 @@ st.set_page_config(
 #DB_LOGIN = os.getenv("DB_LOGIN")
 #DB_PASSWORD = os.getenv("DB_PASSWORD")
 
+# Debugging line (remove after checking)
+st.write("Secrets available:", st.secrets)
+
+# Use `.get()` to prevent errors if secrets are missing
 DB_LOGIN = st.secrets["DB_LOGIN"]
 DB_PASSWORD = st.secrets["DB_PASSWORD"]
 
+st.write('TEMP')
 st.write(DB_LOGIN)
 st.write(DB_PASSWORD)
 
 db_config = {
     'host': 'sql7.freesqldatabase.com',
-    'database': DB_LOGIN,
-    'user': DB_LOGIN,
-    'password': DB_PASSWORD,
+    'database': 'sql7760550',
+    'user': 'sql7760550',
+    'password': 'IZvd79hE57',
     'port': 3306
 }
 
