@@ -12,8 +12,11 @@ from mysql.connector import Error
 
 #region ---- Create database connection
 
-DB_LOGIN = os.getenv("DB_LOGIN")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+#DB_LOGIN = os.getenv("DB_LOGIN")
+#DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+DB_LOGIN = st.secrets("DB_LOGIN")
+DB_PASSWORD = st.secrets("DB_PASSWORD")
 
 db_config = {
     'host': 'sql7.freesqldatabase.com',
