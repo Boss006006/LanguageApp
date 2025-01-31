@@ -20,7 +20,7 @@ st.write("Secrets available:", st.secrets)
 
 # Use `.get()` to prevent errors if secrets are missing
 DB_LOGIN = st.secrets["DB_LOGIN"]
-DB_PASSWORD = st.secrets.get["DB_PASSWORD"]
+DB_PASSWORD = st.secrets["DB_PASSWORD"]
 
 st.write('TEMP')
 st.write(DB_LOGIN)
