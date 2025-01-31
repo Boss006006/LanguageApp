@@ -44,18 +44,15 @@ db_config = {
     'port': 3306
 }
 
-try:
-    connection = mysql.connector.connect(**db_config)
 
-    if connection.is_connected():
-        print("Connected to the database successfully!")
-        cursor = connection.cursor()
-        cursor.execute("SHOW TABLES;")
-        tables = cursor.fetchall()
-        print("Tables:", tables)
+connection = mysql.connector.connect(**db_config)
 
-except Error as e:
-    print(f"Error: {e}")
+connection.is_connected():
+print("Connected to the database successfully!")
+cursor = connection.cursor()
+cursor.execute("SHOW TABLES;")
+tables = cursor.fetchall()
+print("Tables:", tables)
 
 #region ---- Authentication ----
 
