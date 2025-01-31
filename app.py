@@ -5,16 +5,37 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import time
 import os
+import mysql.connector
+from mysql.connector import Error
 
 #endregion
 
 #region ---- Create database connection
-server = 'DESKTOP-LM53HA6\\SQLEXPRESS'
-database = 'LanguageApp'
-username = os.getenv('DB_LOGIN')
-password = os.getenv('DB_PASSWORD')
 
-connection_string = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}"
+DB_LOGIN = os.getenv("DB_LOGIN")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+
+db_config = {
+    'host': 'sql7.freesqldatabase.com',
+    'database': DB_LOGIN,
+    'user': DB_LOGIN,
+    'password': DB_PASSWORD,
+    'port': 3306
+}
+
+try:
+    connection = mysql.connector.connect(**db_config)
+
+    if connection.is_connected():
+        print("Connected to the database successfully!")
+        cursor = connection.cursor()
+        cursor.execute("SHOW TABLES;")
+        tables = cursor.fetchall()
+        print("Tables:", tables)
+
+except Error as e:
+    print(f"Error: {e}")
+
 #endregion
  
 #region ---- Page Configuration ----
@@ -33,6 +54,10 @@ st.set_page_config(
 st.title('Mergengues and Schuimgebakjes')
 st.write("---")
 
+if st.button("Refresh"):
+    st.cache_data.clear()
+    st.rerun()
+
 with st.sidebar:
     general_menu = option_menu(
             menu_title='Menu'
@@ -43,19 +68,38 @@ with st.sidebar:
 
 #endregion
 
+### DEV
+
+#TODO: Fix cachin error
+#@st.cache_resource
+def get_connection():
+    """Establish and cache the database connection."""
+    try:
+        conn = mysql.connector.connect(**db_config)
+        return conn
+    except Error as e:
+        st.error(f"Error: {e}")
+        return None
+
+@st.cache_data
+def load_data():
+    """Load _L_L_WORDS table into a Pandas DataFrame."""
+    conn = get_connection()
+    if conn:
+        query = "SELECT * FROM _L_L_WORDS;"
+        df = pd.read_sql(query, conn)
+        conn.close()
+        return df
+    else:
+        return pd.DataFrame() 
+    
 #region ---- Practice words ----
+
+#TODO: Add parameter to use function for new tables
+df_words = load_data()
+
 if general_menu == 'Words':
     st.title('Practice words')
-
-    with pyodbc.connect(connection_string) as conn:
-        print("Connection successful!")
-
-        # Fetch data into a DataFrame
-        query = "SELECT * FROM L_Translations"
-        df_words = pd.read_sql(query, conn)
-
-
-    st.write('---')
 
     # Display headers just once
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -76,37 +120,6 @@ if general_menu == 'Words':
         with col3:
             st.markdown(f"<h5 style='color: #333;'>{row['Spanish']}</h5>", unsafe_allow_html=True)
 
-#endregion
 
-#region ---- Input Words ----
-if general_menu == 'Input Words':
-    st.title('Input words')
-
-    # Input fields for Dutch, English, and Spanish
-    dutch_word = st.text_input("Dutch Word", placeholder="Enter the Dutch word")
-    english_word = st.text_input("English Word", placeholder="Enter the English word")
-    spanish_word = st.text_input("Spanish Word", placeholder="Enter the Spanish word")
-
-    # Submit button
-    if st.button("Submit"):
-        # Check if all fields are filled
-        if dutch_word and english_word and spanish_word:
-            try:
-                # Connect to the database and insert the new row
-                with pyodbc.connect(connection_string) as conn:
-                    cursor = conn.cursor()
-                    insert_query = """
-                    INSERT INTO L_Translations (Dutch, English, Spanish)
-                    VALUES (?, ?, ?)
-                    """
-                    cursor.execute(insert_query, (dutch_word, english_word, spanish_word))
-                    conn.commit()
-                    st.success("New words inserted successfully!")
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
-        else:
-            st.warning("Please fill in all fields before submitting.")
-#endregion
-
-
+### DEV
 
