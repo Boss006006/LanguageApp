@@ -15,14 +15,11 @@ from mysql.connector import Error
 #DB_LOGIN = os.getenv("DB_LOGIN")
 #DB_PASSWORD = os.getenv("DB_PASSWORD")
 
-DB_LOGIN = st.secrets["DB_LOGIN"]
-DB_PASSWORD = st.secrets["DB_PASSWORD"]
-
 db_config = {
     'host': 'sql7.freesqldatabase.com',
-    'database': DB_LOGIN,
-    'user': DB_LOGIN,
-    'password': DB_PASSWORD,
+    'database': 'sql7760550',
+    'user': 'sql7760550',
+    'password': 'IZvd79hE57',
     'port': 3306
 }
 
