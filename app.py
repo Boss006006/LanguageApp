@@ -22,6 +22,7 @@ st.write("Secrets available:", st.secrets)
 DB_LOGIN = st.secrets.get("DB_LOGIN", None)
 DB_PASSWORD = st.secrets.get("DB_PASSWORD", None)
 
+st.write('TEMP')
 st.write(DB_LOGIN)
 st.write(DB_PASSWORD)
 
