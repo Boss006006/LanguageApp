@@ -10,6 +10,16 @@ from mysql.connector import Error
 
 #endregion
 
+#endregion
+ 
+#region ---- Page Configuration ----
+st.set_page_config(
+        page_title = 'LanguageApp'
+    ,   layout = 'wide'
+)
+
+#endregion
+
 #region ---- Create database connection
 
 #DB_LOGIN = os.getenv("DB_LOGIN")
@@ -25,9 +35,6 @@ DB_PASSWORD = st.secrets["DB_PASSWORD"]
 st.write('TEMP')
 st.write(DB_LOGIN)
 st.write(DB_PASSWORD)
-
-if not DB_LOGIN or not DB_PASSWORD:
-    st.error("Database credentials are missing! Set them in Streamlit Cloud.")
 
 db_config = {
     'host': 'sql7.freesqldatabase.com',
@@ -49,16 +56,6 @@ try:
 
 except Error as e:
     print(f"Error: {e}")
-
-#endregion
- 
-#region ---- Page Configuration ----
-st.set_page_config(
-        page_title = 'LanguageApp'
-    ,   layout = 'wide'
-)
-
-#endregion
 
 #region ---- Authentication ----
 
