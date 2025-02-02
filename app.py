@@ -325,7 +325,7 @@ if general_menu == 'Practice Words':
                         update_score(row['English'], row['Score_ES'], 'Score_ES')
 
     if language_menu == 'Dutch':
-            st.subheader('Letc practice Dutch')
+            st.subheader('Lets practice Dutch')
 
             st.info("""Pick a number of words you want to practice. Each time you have the correct answer, the score
                     goes up by 1. Lower the score to only pick words with a lower score. Select a start and end date to choose
