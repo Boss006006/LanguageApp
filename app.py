@@ -181,9 +181,12 @@ if general_menu == "ES Verbs":
     st.header("Verbs to learn")
 
     # Create selection menus
-    selected_verbs = st.multiselect("Select verb", verbs)
-    selected_language = st.multiselect("Select language", languages, default=languages) 
-    selected_times = st.multiselect("Select time", times, default=times)
+
+    col1, col2, col3 = st.columns(3)
+
+    selected_verbs = col1.multiselect("Select verb", verbs)
+    selected_language = col2.multiselect("Select language", languages, default=languages) 
+    selected_times = col3.multiselect("Select time", times, default=times)
 
     first_column_name = 'Infinitive'  
 
@@ -216,7 +219,6 @@ if general_menu == "ES Verbs":
         st.dataframe(globals()[verb_name][selected_columns_ordered])
 
 # endregion
-
 
 #region ---- NL Verbs ----
 
@@ -268,14 +270,23 @@ if general_menu == "NL Verbs":
 
     # Define times and language
     languages = ["Dutch", "English"]
-    times = ["Present", "Preterite", "Imperfect", "Future", "Conditional"]
+    times = ["TT", "OVT", "VTT", "VVT"]
     
     st.header("Verbs to learn")
 
+    st.info("""
+    TT = Tegenwoordige Tijd (Present)   
+    OVT = Onvoltooid Verleden Tijd (Simple Past Tense)  
+    VTT = Voltooid Tegenwoordige Tijd (Present Perfect Tense)  
+    VVT = Voltooid Verleden Tijd (Past Perfect Tense/Conditional)  
+    """)
+
     # Create selection menus
-    selected_verbs = st.multiselect("Select verb", verbs)
-    selected_language = st.multiselect("Select language", languages, default=languages) 
-    selected_times = st.multiselect("Select time", times, default=times)
+    col1, col2, col3 = st.columns(3)
+
+    selected_verbs = col1.multiselect("Select verb", verbs)
+    selected_language = col2.multiselect("Select language", languages, default=languages) 
+    selected_times = col3.multiselect("Select time", times, default=times)
 
     first_column_name = 'Infinitive'  
 
