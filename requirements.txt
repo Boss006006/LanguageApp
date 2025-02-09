@@ -35,8 +35,11 @@ openpyxl==3.1.5
 packaging==24.2
 pandas==2.2.3
 parso==0.8.4
+patsy==1.0.1
 pillow==11.1.0
 platformdirs==4.3.6
+plotly==6.0.0
+plotly-express==0.4.1
 prompt_toolkit==3.0.50
 protobuf==5.29.3
 psutil==6.1.1
@@ -52,9 +55,11 @@ referencing==0.36.2
 requests==2.32.3
 rich==13.9.4
 rpds-py==0.22.3
+scipy==1.15.1
 six==1.17.0
 smmap==5.0.2
 stack-data==0.6.3
+statsmodels==0.14.4
 streamlit==1.41.1
 streamlit-option-menu==0.4.0
 tenacity==9.0.0
