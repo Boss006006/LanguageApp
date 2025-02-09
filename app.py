@@ -8,7 +8,8 @@ import os
 import mysql.connector
 from mysql.connector import Error
 import openpyxl
-from datetime import datetime
+from datetime import datetime, timedelta
+import plotly.express as px 
 
 #endregion
  
@@ -35,7 +36,7 @@ with st.sidebar:
 with st.sidebar:
     general_menu = option_menu(
             menu_title='Menu'
-        ,   options = ['Words', 'Add Words', 'Practice Words', 'Grammar', 'ES Verbs', 'NL Verbs']
+        ,   options = ['Learn Words', 'Add Words', 'Practice Words', 'Grammar', 'ES Verbs', 'NL Verbs', 'Statistics']
         ,   orientation = 'Vertical'   
 
     )
@@ -140,6 +141,7 @@ def update_score(english, score, column_name):
 
 df_words = load_data(table_name='_L_L_WORDS')
 df_words['Date'] = pd.to_datetime(df_words['DTS']).dt.date  # Convert to date format
+df_scores = pd.read_excel('Scores.xlsx', sheet_name='Words')
 
 #endregion
 
@@ -170,10 +172,32 @@ if general_menu == "Add Words":
 
 #endregion
 
-#region ---- Words ----
+#region ---- Learn Words ----
 
-if general_menu == 'Words':
-    st.title('Practice words')
+if general_menu == 'Learn Words':
+    st.title('Learn Words')
+
+    st.write("Select the period to see the statistics:")
+
+    st.write('---')
+
+    col1, col2 = st.columns(2)
+
+    today = datetime.today().date()  # Ensuring it's a date object
+    begin_date_default = datetime(2025, 1, 31).date()  # Same here
+    begin_date = col1.date_input("Begin date", value=begin_date_default, max_value=today)
+    end_date = col2.date_input("End date", value=today, max_value=today)
+
+    # Convert begin_date and end_date to pandas.Timestamp for comparison
+    begin_date = pd.to_datetime(begin_date)
+    end_date = pd.to_datetime(end_date)
+
+    # Make sure the 'Date' column in df_words is of type pandas.Timestamp
+    df_words['Date'] = pd.to_datetime(df_words['Date'])
+
+    # Filter the dataframe
+    df_words_f = df_words[(df_words['Date'] >= begin_date) 
+                        & (df_words['Date'] <= end_date)]
 
     # Display headers just once
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -185,7 +209,7 @@ if general_menu == 'Words':
         st.subheader("🇪🇸 Spanish")
 
     # Display the words row by row
-    for index, row in df_words.iterrows():
+    for index, row in df_words_f.iterrows():
         col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
             st.write(f"<h5 style='color: #333;'>{row['Dutch']}</h5>", unsafe_allow_html=True)
@@ -302,6 +326,23 @@ if general_menu == 'Practice Words':
                                 st.markdown(f"<span style='color: darkred;'>English word: <b>{key}</b> || Your answer: <b>{value}</b> || Correct answer: <b>{correct_answer}</b></span>", unsafe_allow_html=True)
                                 wrong_answers += 1
 
+                    N_correct_answers = N_practice_words - wrong_answers
+
+                    st.write(f"N Questions: {N_practice_words}")
+                    st.write(f"N Questions: {N_correct_answers}")
+                    st.write(f"N Wrong answers: {wrong_answers}")
+
+                    today = datetime.now().strftime('%Y-%m-%d')
+
+                    # Check if today's date is in the DataFrame
+                    try:
+                        # Update the score for today by adding the correct answers to the existing score
+                        df_scores.loc[df_scores['Date'] == today, 'Spanish'] += N_correct_answers
+                    except Exception as E:
+                        st.error('The date is out of the database range')
+                         
+                    df_scores.to_excel('Scores.xlsx', sheet_name='Words', index=False)
+                                        
                     if wrong_answers == 0:
                         st.write("All answers correct!")
                         st.balloons()
@@ -638,5 +679,198 @@ if general_menu == "NL Verbs":
 
         # Display the dataframe with the ordered selected columns
         st.dataframe(globals()[verb_name][selected_columns_ordered])
+
+#endregion
+
+#region ---- Statistics ----
+
+def score_words_daily(date_column, score_column, language):
+    """Return a plotly object with x = datecolumn and y = scorecolumn per day"""
+
+    data = pd.DataFrame({
+        'Date': date_column,
+        'Score': score_column
+    })
+
+    score_avg = data['Score'].mean()
+
+    # Generate a bar chart
+    fig = px.bar(data, 
+            x='Date', 
+            y='Score', 
+            title=f"Daily score {language} words", 
+            labels={'Score': 'Score', 'Date': 'Date'},
+            color_discrete_sequence=['#123456'])
+    
+    # Add a target line
+    fig.add_hline(y=50, line_dash="dash", 
+                  annotation_text="Target",
+                  line_color='#FFCCCC', 
+                  annotation_position="top right")
+    
+    # Add the avg line
+    fig.add_hline(y=score_avg, line_dash="dash", 
+                  annotation_text="Average", 
+                  line_color='#6699CC',
+                  annotation_position="top right")
+    
+    # Format the x axis
+    fig.update_xaxes(tickformat="%Y-%m-%d")
+
+    return fig
+
+def score_words_weekly(date_column, score_column, language):
+    """
+    Return a Plotly bar chart object aggregating scores by week.
+
+    Parameters:
+    - date_column (pd.Series): A pandas Series containing dates.
+    - score_column (pd.Series): A pandas Series containing integer scores.
+    - language (str): The language of the score data.
+
+    Returns:
+    - plotly.graph_objects.Figure: A Plotly bar chart with weekly aggregated scores.
+    """
+    # Create a DataFrame from the provided columns
+    data = pd.DataFrame({
+        'Date': pd.to_datetime(date_column),
+        'Score': score_column
+    })
+
+    # Group by week and sum the scores
+    data['Week'] = data['Date'].dt.to_period('W').apply(lambda r: r.start_time)
+    weekly_data = data.groupby('Week')['Score'].sum().reset_index()
+
+    # Calculate the average score
+    score_avg = weekly_data['Score'].mean()
+
+    # Generate a bar chart
+    fig = px.bar(weekly_data, 
+                 x='Week', 
+                 y='Score', 
+                 title=f"Weekly Score for {language} Words",
+                 labels={'Score': 'Score', 'Week': 'Week Start'},
+                 color_discrete_sequence=['#123456'])
+
+    # Add a target line
+    fig.add_hline(y=50, line_dash="dash", 
+                  annotation_text="Target",
+                  line_color='#FFCCCC', 
+                  annotation_position="top right")
+    
+    # Add the average score line
+    fig.add_hline(y=score_avg, line_dash="dash", 
+                  annotation_text="Average", 
+                  line_color='#6699CC',
+                  annotation_position="top right")
+    
+    # Format the x axis to show only the week start date
+    fig.update_xaxes(tickformat="%Y-%m-%d")
+
+    return fig
+
+def plot_min_max_scores(date_column, score_column, language):
+    """
+    Returns a Plotly line plot object showing the minimum and maximum scores for each date.
+
+    Parameters:
+    - date_column (pd.Series): A pandas Series containing dates.
+    - score_column (pd.Series): A pandas Series containing integer scores.
+    - language (str): The language of the scores.
+
+    Returns:
+    - plotly.graph_objects.Figure: A Plotly line plot of the min and max scores.
+    """
+    # Create a DataFrame from the provided columns
+    data = pd.DataFrame({
+        'Date': pd.to_datetime(date_column),
+        'Score': score_column
+    })
+
+    # Group by date and aggregate to find min and max scores
+    min_max_scores = data.groupby('Date')['Score'].agg(['min', 'max']).reset_index()
+
+    # Prepare to plot both min and max in the same figure using melt for long format
+    min_max_long = min_max_scores.melt(id_vars=['Date'], var_name='Statistic', value_name='Score')
+
+    # Generate a line plot
+    fig = px.line(min_max_long, 
+                  x='Date', 
+                  y='Score', 
+                  color='Statistic',
+                  title=f"Min and Max Daily Scores for {language}",
+                  labels={'Score': 'Score', 'Date': 'Date'},
+                  markers=True)  # Add markers to the line plot
+
+    # Format the x axis to display only the date
+    fig.update_xaxes(tickformat="%Y-%m-%d")
+
+    return fig
+
+if general_menu == 'Statistics':
+    df_scores = pd.read_excel('Scores.xlsx', sheet_name='Words')
+    df_scores['Date'] = df_scores['Date'].dt.date
+
+    st.subheader('Statistics')
+
+    st.write("Select the period to see the statistics:")
+
+    col1, col2 = st.columns(2)
+
+    today = datetime.today()
+    begin_date_default = today - timedelta(days=6)
+    begin_date = col1.date_input("Begin date", value=begin_date_default, max_value=today)
+    end_date = col2.date_input("End date", value=today, max_value=today)
+
+    st.write('---')
+
+    df_scores['Date'] = pd.to_datetime(df_scores['Date'])
+
+    df_scores_f = df_scores[(df_scores['Date'] >= pd.to_datetime(begin_date)) 
+                           & (df_scores['Date'] <= pd.to_datetime(end_date))]
+    
+    # Call the functions to create the objects
+
+    fig_ES_words_D = score_words_daily(date_column=df_scores_f['Date'],
+                                     score_column=df_scores_f['Spanish'],
+                                     language='Spanish')
+    
+    fig_NL_words_D = score_words_daily(date_column=df_scores_f['Date'],
+                                     score_column=df_scores_f['Dutch'],
+                                     language='Dutch')
+        
+    fig_ES_words_W = score_words_weekly(date_column=df_scores_f['Date'],
+                                     score_column=df_scores_f['Spanish'],
+                                     language='Spanish')
+    
+    fig_NL_words_W = score_words_weekly(date_column=df_scores_f['Date'],
+                                     score_column=df_scores_f['Dutch'],
+                                     language='Dutch')
+    
+    fig_ES_word_scores = plot_min_max_scores(date_column=df_words['Date'],
+                                     score_column=df_words['Score_ES'],
+                                     language='Spanish')
+    
+    fig_NL_word_scores = plot_min_max_scores(date_column=df_words['Date'],
+                                     score_column=df_words['Score_NL'],
+                                     language='Dutch')
+    
+    # Plot the figures
+
+    # Daily scores
+    col1.plotly_chart(fig_ES_words_D, use_container_width=True)
+    col2.plotly_chart(fig_NL_words_D, use_container_width=True)
+    
+    # Weekly scores
+    col1.plotly_chart(fig_ES_words_W, use_container_width=True)
+    col2.plotly_chart(fig_NL_words_W, use_container_width=True)
+
+    #Highest score per day
+    col1.plotly_chart(fig_ES_word_scores, use_container_width=True)
+    col2.plotly_chart(fig_NL_word_scores, use_container_width=True)
+
+
+
+
 
 #endregion
