@@ -753,7 +753,7 @@ def score_words_weekly(date_column, score_column, language):
                  color_discrete_sequence=['#123456'])
 
     # Add a target line
-    fig.add_hline(y=50, line_dash="dash", 
+    fig.add_hline(y=350, line_dash="dash", 
                   annotation_text="Target",
                   line_color='#FFCCCC', 
                   annotation_position="top right")
