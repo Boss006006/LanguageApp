@@ -328,19 +328,29 @@ if general_menu == 'Practice Words':
 
                     N_correct_answers = N_practice_words - wrong_answers
 
-                    st.write(f"N Questions: {N_practice_words}")
-                    st.write(f"N Questions: {N_correct_answers}")
-                    st.write(f"N Wrong answers: {wrong_answers}")
+                    #st.write(f"N Questions: {N_practice_words}")
+                    #st.write(f"N Correct Answers: {N_correct_answers}")
+                    #st.write(f"N Wrong Answers: {wrong_answers}")
 
                     today = datetime.now().strftime('%Y-%m-%d')
 
-                    # Check if today's date is in the DataFrame
-                    try:
-                        # Update the score for today by adding the correct answers to the existing score
-                        df_scores.loc[df_scores['Date'] == today, 'Spanish'] += N_correct_answers
-                    except Exception as E:
-                        st.error('The date is out of the database range')
-                         
+                    # Ensure 'Date' column is in datetime format
+                    df_scores['Date'] = pd.to_datetime(df_scores['Date'])
+
+                    # Ensure the date format in the DataFrame matches 'today'
+                    df_scores['Date'] = df_scores['Date'].dt.strftime('%Y-%m-%d')
+
+                    # Check if today's date exists in the DataFrame
+                    if today in df_scores['Date'].values:
+                        # Update the 'Spanish' column, handling NaN values properly
+                        df_scores.loc[df_scores['Date'] == today, 'Spanish'] = (
+                            df_scores.loc[df_scores['Date'] == today, 'Spanish'].fillna(0) + N_correct_answers
+                        )
+                    else:
+                        st.error("Today's date not found in DataFrame.")
+                    
+                    df_scores['Date'] = pd.to_datetime(df_scores['Date'])
+
                     df_scores.to_excel('Scores.xlsx', sheet_name='Words', index=False)
                                         
                     if wrong_answers == 0:
@@ -365,126 +375,158 @@ if general_menu == 'Practice Words':
                     for index, row in filtered_df.iterrows():
                         update_score(row['English'], row['Score_ES'], 'Score_ES')
 
+
     if language_menu == 'Dutch':
-            st.subheader('Lets practice Dutch')
+        st.subheader('Lets practice Dutch')
 
-            st.info("""Pick a number of words you want to practice. Each time you have the correct answer, the score
-                    goes up by 1. Lower the score to only pick words with a lower score. Select a start and end date to choose
-                    a period when the words were added to the data. The minimum date is 31-01-2025, when the first word was added.""")
+        st.info("""Pick a number of words you want to practice. Each time you have the correct answer, the score
+            goes up by 1. Lower the score to only pick words with a lower score. Select a start and end date to choose
+            a period when the words were added to the data. The minimum date is 31-01-2025, when the first word was added.""")
 
-            num_input, cutoff_input, cut_off_date1, cut_off_date2, num_button = st.columns([1.5,1.5,1.5,1.5,2])
+        num_input, cutoff_input, cut_off_date1, cut_off_date2, num_button = st.columns([1.5,1.5,1.5,1.5,2])
 
-            min_score = min(df_words["Score_NL"])
-            max_score = max(df_words["Score_NL"])
+        min_score = min(df_words["Score_NL"])
+        max_score = max(df_words["Score_NL"])
 
-            N_practice_words = num_input.number_input("Number of words:", min_value=0, 
-                max_value=len(df_words), step=1, value=0)
-            cutoff_value = cutoff_input.number_input("Enter score cutoff:", 
-                min_value=min_score, max_value=max_score, value=max_score)
-            
-            # Define the minimum date
-            min_date_value = datetime(2025, 1, 31).date()
+        N_practice_words = num_input.number_input("Number of words:", min_value=0, 
+            max_value=len(df_words), step=1, value=0)
+        cutoff_value = cutoff_input.number_input("Enter score cutoff:", 
+            min_value=min_score, max_value=max_score, value=max_score)
+        
+        # Define the minimum date
+        min_date_value = datetime(2025, 1, 31).date()
 
-            # Add date picker widget with a minimum date and default value
+        # Add date picker widget with a minimum date and default value
 
-            min_date = cut_off_date1.date_input("Select a start date:", 
-                                            min_value=min_date_value,
-                                            max_value=pd.Timestamp('today').date(),
-                                            value=min_date_value
-                                            )
-            end_date = cut_off_date2.date_input("Select an end date:", 
-                                            min_value=min_date_value,
-                                            max_value=pd.Timestamp('today').date(),
-                                            value=pd.Timestamp('today').date()
-                                            )
+        min_date = cut_off_date1.date_input("Select a start date:", 
+                                        min_value=min_date_value,
+                                        max_value=pd.Timestamp('today').date(),
+                                        value=min_date_value
+                                        )
+        end_date = cut_off_date2.date_input("Select an end date:", 
+                                        min_value=min_date_value,
+                                        max_value=pd.Timestamp('today').date(),
+                                        value=pd.Timestamp('today').date()
+                                        )
 
-            num_button.markdown(" ")
-            num_button.markdown(" ")
+        num_button.markdown(" ")
+        num_button.markdown(" ")
 
-            if num_button.button("Click to start practice:"):
-                filtered_words_df = df_words[(df_words["Score_NL"] <= cutoff_value) 
-                                            & (df_words["Date"] <= end_date)
-                                            & (df_words["Date"] >= min_date)]
+        if num_button.button("Click to start practice:"):
+            filtered_words_df = df_words[(df_words["Score_NL"] <= cutoff_value) 
+                                        & (df_words["Date"] <= end_date)
+                                        & (df_words["Date"] >= min_date)]
 
-                if not filtered_words_df.empty:
-                    if N_practice_words > len(filtered_words_df):
-                        st.write("The number of words requested exceeds the available words. Adjusting to maximum available.")
-                        N_practice_words = len(filtered_words_df)  
-
-                    if N_practice_words > 0:
-                        practice_words_df = filtered_words_df.sample(N_practice_words)
-                    else:
-                        st.write("Select at least 1 word")
-                        practice_words_df = df_words.sample(N_practice_words)
-                else:
-                    st.write("No words found for the selected criteria. Please adjust your selection.")
-                    N_practice_words = 0
-                    
-            words_column, practice_words_column = st.columns(2)
-            
-        # Practice the words
-            if 'answers' not in st.session_state:
-                st.session_state.answers = ["" for _ in range(len(practice_words_df))]
-
-            with st.form(key='practice_form'):
-                # TODO: Write the new values to the state_session answers instead of using the keys 
-                for index, question in enumerate(practice_words_df["English"]):
-                    spacer2, words_question, word_answer = st.columns([2,1,3])
-
-                    words_question.markdown(" ")
-                    words_question.markdown(" ")
-
-                    words_question.markdown(f"Translate: **{question}**")
-                    current_answer = word_answer.text_input(f"Translate word {index + 1}:",  key=f"{index}_{question}")
+            if not filtered_words_df.empty:
+                if N_practice_words > len(filtered_words_df):
+                    st.write("The number of words requested exceeds the available words. Adjusting to maximum available.")
+                    N_practice_words = len(filtered_words_df)  
 
                 if N_practice_words > 0:
-                    spacer2, words_question, word_answer = st.columns([2,1,3])
-                    submit_button = word_answer.form_submit_button(label='Submit answers')
+                    practice_words_df = filtered_words_df.sample(N_practice_words)
+                else:
+                    st.write("Select at least 1 word")
+                    practice_words_df = df_words.sample(N_practice_words)
+            else:
+                st.write("No words found for the selected criteria. Please adjust your selection.")
+                N_practice_words = 0
+                
+        words_column, practice_words_column = st.columns(2)
+        
+    # Practice the words
+        if 'answers' not in st.session_state:
+            st.session_state.answers = ["" for _ in range(len(practice_words_df))]
 
-                    if submit_button:
-                        st.markdown("## Your Answers: ")
+        with st.form(key='practice_form'):
+            # TODO: Write the new values to the state_session answers instead of using the keys 
+            for index, question in enumerate(practice_words_df["English"]):
+                spacer2, words_question, word_answer = st.columns([2,1,3])
 
-                        dict_words_temp = dict(st.session_state)
-                        filtered_dict_words_temp = {key.split('_')[-1]: value for key, value in dict_words_temp.items() if '_' in key}
-                        
-                        wrong_answers = 0
+                words_question.markdown(" ")
+                words_question.markdown(" ")
 
-                        for key, value in filtered_dict_words_temp.items():
-                            
-                            if key in df_words["English"].values:
-                                correct_answer_row = df_words[df_words['English'] == key]
-                                if not correct_answer_row.empty:
-                                    correct_answer = correct_answer_row['Dutch'].iloc[0]
-                                else:
-                                    correct_answer = None
+                words_question.markdown(f"Translate: **{question}**")
+                current_answer = word_answer.text_input(f"Translate word {index + 1}:",  key=f"{index}_{question}")
 
-                                if value == correct_answer:
-                                    st.markdown(f"<span style='color: green;'>English word: <b>{key}</b> || Your answer: <b>{value}</b> is correct</span>", unsafe_allow_html=True)
-                                if value != correct_answer:
-                                    st.markdown(f"<span style='color: darkred;'>English word: <b>{key}</b> || Your answer: <b>{value}</b> || Correct answer: <b>{correct_answer}</b></span>", unsafe_allow_html=True)
-                                    wrong_answers += 1
+            if N_practice_words > 0:
+                spacer2, words_question, word_answer = st.columns([2,1,3])
+                submit_button = word_answer.form_submit_button(label='Submit answers')
 
-                        if wrong_answers == 0:
-                            st.write("All answers correct!")
-                            st.balloons()
-            
-                    if submit_button:
+                if submit_button:
+                    st.markdown("## Your Answers: ")
 
-                        dict_words = dict(st.session_state)
-                        filtered_dict_words = {key.split('_')[-1]: value for key, value in dict_words.items() if '_' in key}
+                    dict_words_temp = dict(st.session_state)
+                    filtered_dict_words_temp = {key.split('_')[-1]: value for key, value in dict_words_temp.items() if '_' in key}
                     
-                        changed_score_keys = []
+                    wrong_answers = 0
 
-                        for key, value in filtered_dict_words.items():
-                            mask = (df_words["English"] == key) & (df_words["Dutch"] == value)
-                            df_words.loc[mask, "Score_NL"] += 1
-                            changed_score_keys.append(key)
+                    for key, value in filtered_dict_words_temp.items():
+                        
+                        if key in df_words["English"].values:
+                            correct_answer_row = df_words[df_words['English'] == key]
+                            if not correct_answer_row.empty:
+                                correct_answer = correct_answer_row['Dutch'].iloc[0]
+                            else:
+                                correct_answer = None
 
-                        filtered_df = df_words[df_words['English'].isin(changed_score_keys)]
+                            if value == correct_answer:
+                                st.markdown(f"<span style='color: green;'>English word: <b>{key}</b> || Your answer: <b>{value}</b> is correct</span>", unsafe_allow_html=True)
+                            if value != correct_answer:
+                                st.markdown(f"<span style='color: darkred;'>English word: <b>{key}</b> || Your answer: <b>{value}</b> || Correct answer: <b>{correct_answer}</b></span>", unsafe_allow_html=True)
+                                wrong_answers += 1
 
-                        # Assuming filtered_df is your DataFrame with updated scores
-                        for index, row in filtered_df.iterrows():
-                            update_score(row['English'], row['Score_NL'], 'Score_NL')
+                    N_correct_answers = N_practice_words - wrong_answers
+
+                    #st.write(f"N Questions: {N_practice_words}")
+                    #st.write(f"N Correct Answers: {N_correct_answers}")
+                    #st.write(f"N Wrong Answers: {wrong_answers}")
+
+                    today = datetime.now().strftime('%Y-%m-%d')
+
+                    # Ensure 'Date' column is in datetime format
+                    df_scores['Date'] = pd.to_datetime(df_scores['Date'])
+
+                    # Ensure the date format in the DataFrame matches 'today'
+                    df_scores['Date'] = df_scores['Date'].dt.strftime('%Y-%m-%d')
+
+                    # Check if today's date exists in the DataFrame
+                    if today in df_scores['Date'].values:
+                        # Update the 'Spanish' column, handling NaN values properly
+                        df_scores.loc[df_scores['Date'] == today, 'Dutch'] = (
+                            df_scores.loc[df_scores['Date'] == today, 'Dutch'].fillna(0) + N_correct_answers
+                        )
+                    else:
+                        st.error("Today's date not found in DataFrame.")
+                    
+                    df_scores['Date'] = pd.to_datetime(df_scores['Date'])
+
+                    df_scores.to_excel('Scores.xlsx', sheet_name='Words', index=False)
+                                        
+                    if wrong_answers == 0:
+                        st.write("All answers correct!")
+                        st.balloons()
+        
+                if submit_button:
+
+                    dict_words = dict(st.session_state)
+                    filtered_dict_words = {key.split('_')[-1]: value for key, value in dict_words.items() if '_' in key}
+                
+                    changed_score_keys = []
+
+                    for key, value in filtered_dict_words.items():
+                        mask = (df_words["English"] == key) & (df_words["Dutch"] == value)
+                        df_words.loc[mask, "Score_NL"] += 1
+                        changed_score_keys.append(key)
+
+                    filtered_df = df_words[df_words['English'].isin(changed_score_keys)]
+
+                    # Assuming filtered_df is your DataFrame with updated scores
+                    for index, row in filtered_df.iterrows():
+                        update_score(row['English'], row['Score_NL'], 'Score_NL')
+
+
+
+   
 
 #endregion
 
@@ -868,9 +910,5 @@ if general_menu == 'Statistics':
     #Highest score per day
     col1.plotly_chart(fig_ES_word_scores, use_container_width=True)
     col2.plotly_chart(fig_NL_word_scores, use_container_width=True)
-
-
-
-
 
 #endregion
