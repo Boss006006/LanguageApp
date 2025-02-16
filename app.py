@@ -21,7 +21,7 @@ st.set_page_config(
 
 col1, col2 = st.columns([3,1])
 
-col1.title('Mergengues and Schuimgebakjes')
+col1.title('Merengues and Schuimgebakjes')
 
 col2.image("image.png"
     ,   use_container_width=True)
