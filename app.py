@@ -270,20 +270,22 @@ if general_menu == 'Practice Words':
 
             if not filtered_words_df.empty:
                 if N_practice_words > len(filtered_words_df):
-                    st.write("The number of words requested exceeds the available words. Adjusting to maximum available.")
-                    N_practice_words = len(filtered_words_df)  
+                    st.warning("The number of words requested exceeds the available words. Adjusting to maximum available.")
+                    N_practice_words = len(filtered_words_df)
 
                 if N_practice_words > 0:
                     practice_words_df = filtered_words_df.sample(N_practice_words)
+
+
+
                 else:
                     st.write("Select at least 1 word")
                     practice_words_df = df_words.sample(N_practice_words)
             else:
-                st.write("No words found for the selected criteria. Please adjust your selection.")
+                st.warning("No words found for the selected criteria. Please adjust your selection.")
                 N_practice_words = 0
                 
         words_column, practice_words_column = st.columns(2)
-        
     # Practice the words
         if 'answers' not in st.session_state:
             st.session_state.answers = ["" for _ in range(len(practice_words_df))]
@@ -305,6 +307,7 @@ if general_menu == 'Practice Words':
 
                 if submit_button:
                     st.markdown("## Your Answers: ")
+                    st.error(f"TEMPTEST: {N_practice_words}") 
 
                     dict_words_temp = dict(st.session_state)
                     filtered_dict_words_temp = {key.split('_')[-1]: value for key, value in dict_words_temp.items() if '_' in key}
@@ -326,11 +329,13 @@ if general_menu == 'Practice Words':
                                 st.markdown(f"<span style='color: darkred;'>English word: <b>{key}</b> || Your answer: <b>{value}</b> || Correct answer: <b>{correct_answer}</b></span>", unsafe_allow_html=True)
                                 wrong_answers += 1
 
+
+                    N_practice_words = len(filtered_dict_words_temp)-1
                     N_correct_answers = N_practice_words - wrong_answers
 
-                    #st.write(f"N Questions: {N_practice_words}")
-                    #st.write(f"N Correct Answers: {N_correct_answers}")
-                    #st.write(f"N Wrong Answers: {wrong_answers}")
+                    st.write(f"N Questions: {N_practice_words}")
+                    st.write(f"N Correct Answers: {N_correct_answers}")
+                    st.write(f"N Wrong Answers: {wrong_answers}")
 
                     today = datetime.now().strftime('%Y-%m-%d')
 
@@ -354,7 +359,7 @@ if general_menu == 'Practice Words':
                     df_scores.to_excel('Scores.xlsx', sheet_name='Words', index=False)
                                         
                     if wrong_answers == 0:
-                        st.write("All answers correct!")
+                        st.success("All answers correct!")
                         st.balloons()
         
                 if submit_button:
@@ -419,7 +424,7 @@ if general_menu == 'Practice Words':
 
             if not filtered_words_df.empty:
                 if N_practice_words > len(filtered_words_df):
-                    st.write("The number of words requested exceeds the available words. Adjusting to maximum available.")
+                    st.warning("The number of words requested exceeds the available words. Adjusting to maximum available.")
                     N_practice_words = len(filtered_words_df)  
 
                 if N_practice_words > 0:
@@ -428,7 +433,7 @@ if general_menu == 'Practice Words':
                     st.write("Select at least 1 word")
                     practice_words_df = df_words.sample(N_practice_words)
             else:
-                st.write("No words found for the selected criteria. Please adjust your selection.")
+                st.warning("No words found for the selected criteria. Please adjust your selection.")
                 N_practice_words = 0
                 
         words_column, practice_words_column = st.columns(2)
@@ -475,9 +480,10 @@ if general_menu == 'Practice Words':
                                 st.markdown(f"<span style='color: darkred;'>English word: <b>{key}</b> || Your answer: <b>{value}</b> || Correct answer: <b>{correct_answer}</b></span>", unsafe_allow_html=True)
                                 wrong_answers += 1
 
+                    N_practice_words = len(filtered_dict_words_temp)-1
                     N_correct_answers = N_practice_words - wrong_answers
 
-                    #st.write(f"N Questions: {N_practice_words}")
+                    #st.write(f"Numbers: {N_practice_words}")
                     #st.write(f"N Correct Answers: {N_correct_answers}")
                     #st.write(f"N Wrong Answers: {wrong_answers}")
 
@@ -503,7 +509,7 @@ if general_menu == 'Practice Words':
                     df_scores.to_excel('Scores.xlsx', sheet_name='Words', index=False)
                                         
                     if wrong_answers == 0:
-                        st.write("All answers correct!")
+                        st.success("All answers correct!")
                         st.balloons()
         
                 if submit_button:
@@ -726,44 +732,52 @@ if general_menu == "NL Verbs":
 
 #region ---- Statistics ----
 
-def score_words_daily(date_column, score_column, language):
-    """Return a plotly object with x = datecolumn and y = scorecolumn per day"""
-
+def score_words_daily(date_column, score_column, language, target):
+    """Return a plotly object with x = date_column and y = score_column per day, with conditional coloring"""
+    
     data = pd.DataFrame({
         'Date': date_column,
         'Score': score_column
     })
 
+    # Calculate average score
     score_avg = data['Score'].mean()
+
+    # Assign color based on score relative to target
+    data['Color'] = data['Score'].apply(lambda x: '#123456' if x >= target else '#FFCCCC')
 
     # Generate a bar chart
     fig = px.bar(data, 
             x='Date', 
             y='Score', 
-            title=f"Daily score {language} words", 
+            title=f"Daily Score of {language.capitalize()} Words", 
             labels={'Score': 'Score', 'Date': 'Date'},
-            color_discrete_sequence=['#123456'])
+            color='Color',
+            color_discrete_map={'#FFCCCC': '#FFCCCC', '#123456': '#123456'})  
     
     # Add a target line
-    fig.add_hline(y=50, line_dash="dash", 
+    fig.add_hline(y=target, line_dash="dash", 
                   annotation_text="Target",
                   line_color='#FFCCCC', 
                   annotation_position="top right")
     
-    # Add the avg line
+    # Add the average score line
     fig.add_hline(y=score_avg, line_dash="dash", 
                   annotation_text="Average", 
-                  line_color='#6699CC',
+                  line_color='#6699CC', 
                   annotation_position="top right")
     
     # Format the x axis
     fig.update_xaxes(tickformat="%Y-%m-%d")
 
+    # Hide the legend
+    fig.update_layout(showlegend=False)
+
     return fig
 
-def score_words_weekly(date_column, score_column, language):
+def score_words_weekly(date_column, score_column, language, target):
     """
-    Return a Plotly bar chart object aggregating scores by week.
+    Return a Plotly bar chart object aggregating scores by week, with conditional coloring.
 
     Parameters:
     - date_column (pd.Series): A pandas Series containing dates.
@@ -786,16 +800,20 @@ def score_words_weekly(date_column, score_column, language):
     # Calculate the average score
     score_avg = weekly_data['Score'].mean()
 
+    # Assign color based on score relative to target
+    weekly_data['Color'] = weekly_data['Score'].apply(lambda x: '#123456' if x >= target else '#FFCCCC')
+
     # Generate a bar chart
     fig = px.bar(weekly_data, 
                  x='Week', 
                  y='Score', 
                  title=f"Weekly Score for {language} Words",
                  labels={'Score': 'Score', 'Week': 'Week Start'},
-                 color_discrete_sequence=['#123456'])
+                 color='Color',
+                 color_discrete_map={'#FFCCCC': '#FFCCCC', '#123456': '#123456'})
 
     # Add a target line
-    fig.add_hline(y=350, line_dash="dash", 
+    fig.add_hline(y=target, line_dash="dash", 
                   annotation_text="Target",
                   line_color='#FFCCCC', 
                   annotation_position="top right")
@@ -808,6 +826,9 @@ def score_words_weekly(date_column, score_column, language):
     
     # Format the x axis to show only the week start date
     fig.update_xaxes(tickformat="%Y-%m-%d")
+
+    # Hide the legend
+    fig.update_layout(showlegend=False)
 
     return fig
 
@@ -875,19 +896,23 @@ if general_menu == 'Statistics':
 
     fig_ES_words_D = score_words_daily(date_column=df_scores_f['Date'],
                                      score_column=df_scores_f['Spanish'],
-                                     language='Spanish')
+                                     language='Spanish',
+                                     target=50)
     
     fig_NL_words_D = score_words_daily(date_column=df_scores_f['Date'],
                                      score_column=df_scores_f['Dutch'],
-                                     language='Dutch')
+                                     language='Dutch',
+                                     target=55)
         
     fig_ES_words_W = score_words_weekly(date_column=df_scores_f['Date'],
                                      score_column=df_scores_f['Spanish'],
-                                     language='Spanish')
+                                     language='Spanish',
+                                     target=350)
     
     fig_NL_words_W = score_words_weekly(date_column=df_scores_f['Date'],
                                      score_column=df_scores_f['Dutch'],
-                                     language='Dutch')
+                                     language='Dutch',
+                                     target=360)
     
     fig_ES_word_scores = plot_min_max_scores(date_column=df_words['Date'],
                                      score_column=df_words['Score_ES'],
