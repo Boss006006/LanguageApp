@@ -307,7 +307,6 @@ if general_menu == 'Practice Words':
 
                 if submit_button:
                     st.markdown("## Your Answers: ")
-                    st.error(f"TEMPTEST: {N_practice_words}") 
 
                     dict_words_temp = dict(st.session_state)
                     filtered_dict_words_temp = {key.split('_')[-1]: value for key, value in dict_words_temp.items() if '_' in key}
@@ -333,9 +332,9 @@ if general_menu == 'Practice Words':
                     N_practice_words = len(filtered_dict_words_temp)-1
                     N_correct_answers = N_practice_words - wrong_answers
 
-                    st.write(f"N Questions: {N_practice_words}")
-                    st.write(f"N Correct Answers: {N_correct_answers}")
-                    st.write(f"N Wrong Answers: {wrong_answers}")
+                    st.info(f"N Questions: {N_practice_words}")
+                    st.info(f"N Correct Answers: {N_correct_answers}")
+                    st.info(f"N Wrong Answers: {wrong_answers}")
 
                     today = datetime.now().strftime('%Y-%m-%d')
 
@@ -483,9 +482,9 @@ if general_menu == 'Practice Words':
                     N_practice_words = len(filtered_dict_words_temp)-1
                     N_correct_answers = N_practice_words - wrong_answers
 
-                    #st.write(f"Numbers: {N_practice_words}")
-                    #st.write(f"N Correct Answers: {N_correct_answers}")
-                    #st.write(f"N Wrong Answers: {wrong_answers}")
+                    st.info(f"N Questions: {N_practice_words}")
+                    st.info(f"N Correct Answers: {N_correct_answers}")
+                    st.info(f"N Wrong Answers: {wrong_answers}")
 
                     today = datetime.now().strftime('%Y-%m-%d')
 
@@ -902,7 +901,7 @@ if general_menu == 'Statistics':
     fig_NL_words_D = score_words_daily(date_column=df_scores_f['Date'],
                                      score_column=df_scores_f['Dutch'],
                                      language='Dutch',
-                                     target=55)
+                                     target=50)
         
     fig_ES_words_W = score_words_weekly(date_column=df_scores_f['Date'],
                                      score_column=df_scores_f['Spanish'],
